@@ -1,0 +1,20 @@
+Cookidoo OpenAPI — third-party and trademark notice
+
+This repository is an independent, unofficial project. It is not affiliated
+with, endorsed by, sponsored by, supported by, or otherwise associated with
+Vorwerk, Thermomix, or Cookidoo.
+
+Cookidoo, Thermomix, Vorwerk, and their related names and marks belong to their
+respective owners. Their names are used only to identify compatibility and the
+service whose observed interface is described. The MIT License grants no
+trademark rights.
+
+The MIT License covers only the independently authored specification,
+documentation, examples, tests, and project tooling in this repository. It
+does not license third-party service responses, vendor specifications,
+application code, recipes, photographs, videos, other media, databases, user
+content, or trademarks. Those materials are intentionally not included.
+
+Source URLs, versions, dates, and hashes are recorded solely for provenance.
+They do not assert ownership of, or permission to redistribute, the referenced
+third-party material.

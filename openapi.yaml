@@ -1,0 +1,3042 @@
+openapi: 3.1.1
+info:
+  title: Cookidoo Web API (Unofficial)
+  version: 0.1.0
+  summary: Observed Cookidoo web API surface for the Polish market.
+  description: |-
+    Independently authored, unofficial research specification. Cookidoo does not
+    publish or support this as a public developer API. Operations marked
+    `advertised-only` may have an inferred method or an incomplete payload.
+
+    Use only with accounts and data you are authorized to access. Public
+    availability of an endpoint is not permission to call it. Never enter live
+    credentials or session cookies into hosted documentation, generators, issue
+    reports, or other third-party tools.
+  termsOfService: https://cookidoo.pl/consent/web/documents/pl-PL/latest/tos
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: https://cookidoo.pl
+  description: Polish Cookidoo market gateway; other markets are unverified.
+tags:
+- name: Recipes
+- name: Search
+- name: Created recipes
+- name: Organize
+- name: Planning
+- name: Shopping
+- name: Notes
+- name: Ratings
+- name: Profile
+- name: Devices
+- name: Ownership
+- name: Feeds
+paths:
+  "/recipes/recipe/{lang}/{recipeId}":
+    get:
+      tags:
+      - Recipes
+      summary: Get an official recipe
+      operationId: getRecipe
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/RecipeId"
+      responses:
+        '200':
+          description: Full recipe representation; exact fields vary by recipe and
+            device generation.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/OfficialRecipe"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/recipes/cluster/{clusterId}":
+    get:
+      tags:
+      - Recipes
+      summary: Get variants in a recipe cluster
+      operationId: getRecipeCluster
+      parameters:
+      - name: clusterId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/recipes/cluster/2/{clusterId}":
+    get:
+      tags:
+      - Recipes
+      summary: Get variants in a recipe cluster (v2)
+      operationId: getRecipeClusterV2
+      parameters:
+      - name: clusterId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/search/api/{lang}/search":
+    get:
+      tags:
+      - Search
+      summary: Search recipes and collections
+      operationId: search
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - name: query
+        in: query
+        schema:
+          type: string
+      - name: context
+        in: query
+        schema:
+          type: string
+      - name: filters
+        in: query
+        description: Repeated service-specific filter expressions.
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: true
+      - name: focus
+        in: query
+        schema:
+          type: string
+      - name: pagination
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/search/api/{lang}/stripe":
+    get:
+      tags:
+      - Search
+      summary: Retrieve a search result stripe
+      operationId: searchStripe
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - name: query
+        in: query
+        schema:
+          type: string
+      - name: context
+        in: query
+        schema:
+          type: string
+      - name: like
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+      - name: exclude
+        in: query
+        schema:
+          type: string
+      - name: sortby
+        in: query
+        schema:
+          type: string
+      - name: ids
+        in: query
+        schema:
+          type: string
+      - name: includeRating
+        in: query
+        schema:
+          type: boolean
+      - name: lazyLoading
+        in: query
+        schema:
+          type: boolean
+      - name: filters
+        in: query
+        description: Repeated service-specific filter expressions.
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/search/api/ingredients":
+    get:
+      tags:
+      - Search
+      summary: Search ingredient filter values
+      operationId: searchIngredients
+      parameters:
+      - name: query
+        in: query
+        schema:
+          type: string
+      - name: filters
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        description: Repeated service-specific filter expressions.
+        style: form
+        explode: true
+      - name: language
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/created-recipes/{lang}":
+    get:
+      tags:
+      - Created recipes
+      summary: List the signed-in user's created recipes
+      operationId: listCreatedRecipes
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - name: ids
+        in: query
+        schema:
+          type: string
+      - name: recipeUrl
+        in: query
+        schema:
+          type: string
+          format: uri
+      - name: partnerId
+        in: query
+        schema:
+          type: string
+      - name: addToCookidoo
+        in: query
+        schema:
+          type: boolean
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    post:
+      tags:
+      - Created recipes
+      summary: Create a blank recipe or import/copy a recipe
+      operationId: createCreatedRecipe
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/XRequestedWith"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - "$ref": "#/components/schemas/CreateBlankRecipe"
+              - "$ref": "#/components/schemas/CopyRecipe"
+            example:
+              recipeName: Synthetic recipe
+      responses:
+        '200':
+          description: Created recipe or an object containing its new recipe ID.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - "$ref": "#/components/schemas/CreatedRecipe"
+                - type: object
+                  required:
+                  - recipeId
+                  properties:
+                    recipeId:
+                      "$ref": "#/components/schemas/CustomerRecipeId"
+        '201':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '429':
+          description: Import/copy rate limited.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Problem"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: true
+  "/created-recipes/{lang}/{customerRecipeId}":
+    get:
+      tags:
+      - Created recipes
+      summary: Get a created recipe in full form
+      operationId: getCreatedRecipe
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/CustomerRecipeId"
+      responses:
+        '200':
+          description: Full created recipe.
+          content:
+            application/vnd.vorwerk.customer-recipe.full+json:
+              schema:
+                "$ref": "#/components/schemas/CreatedRecipe"
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CreatedRecipe"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    patch:
+      tags:
+      - Created recipes
+      summary: Partially update a created recipe
+      operationId: patchCreatedRecipe
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/CustomerRecipeId"
+      - "$ref": "#/components/parameters/XRequestedWith"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreatedRecipePatch"
+            example:
+              name: Synthetic recipe updated
+      responses:
+        '200':
+          description: Updated recipe.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CreatedRecipe"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: public-share
+          destructive: false
+          externallyVisible: true
+          exercised: true
+    delete:
+      tags:
+      - Created recipes
+      summary: Delete a created recipe
+      operationId: deleteCreatedRecipe
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/CustomerRecipeId"
+      - "$ref": "#/components/parameters/XRequestedWith"
+      responses:
+        '200':
+          "$ref": "#/components/responses/EmptySuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: delete
+          destructive: true
+          externallyVisible: false
+          exercised: false
+  "/created-recipes/public/recipes/{lang}/{customerRecipeId}":
+    get:
+      tags:
+      - Created recipes
+      summary: Get a publicly shared created recipe
+      operationId: getPublicCreatedRecipe
+      security:
+      - cookieSession: []
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/CustomerRecipeId"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/organize/{lang}/api/bookmark":
+    put:
+      tags:
+      - Organize
+      summary: Bookmark an official recipe
+      operationId: addBookmark
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/XRequestedWith"
+      requestBody:
+        "$ref": "#/components/requestBodies/RecipeIdBody"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    delete:
+      tags:
+      - Organize
+      summary: Remove an official recipe bookmark
+      operationId: removeBookmark
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/XRequestedWith"
+      requestBody:
+        "$ref": "#/components/requestBodies/RecipeIdBody"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: delete
+          destructive: true
+          externallyVisible: false
+          exercised: false
+  "/organize/{lang}/api/custom-list":
+    get:
+      tags:
+      - Organize
+      summary: List custom recipe lists
+      operationId: listCustomLists
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/Page"
+      responses:
+        '200':
+          description: Preferred mobile representation; exact fields remain incompletely
+            observed.
+          content:
+            application/vnd.vorwerk.organize.custom-list.mobile+json:
+              schema:
+                "$ref": "#/components/schemas/UnknownJson"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    post:
+      tags:
+      - Organize
+      summary: Create a custom recipe list
+      operationId: createCustomList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - title
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                recipeIds:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  uniqueItems: true
+              additionalProperties: false
+            example:
+              title: Synthetic list
+              recipeIds:
+              - r123456
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '201':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/organize/{lang}/api/custom-list/{listId}":
+    get:
+      tags:
+      - Organize
+      summary: Get a custom recipe list
+      operationId: getCustomList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/ListId"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    put:
+      tags:
+      - Organize
+      summary: Update a custom list or add recipes to it
+      operationId: updateCustomList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/ListId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                required:
+                - recipeIds
+                properties:
+                  listId:
+                    type: string
+                  recipeIds:
+                    type: array
+                    items:
+                      type: string
+                    minItems: 1
+                    uniqueItems: true
+                additionalProperties: false
+              - type: object
+                required:
+                - title
+                properties:
+                  title:
+                    type: string
+                    minLength: 1
+                additionalProperties: false
+            example:
+              title: Synthetic list renamed
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    delete:
+      tags:
+      - Organize
+      summary: Delete a custom list
+      operationId: deleteCustomList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/ListId"
+      responses:
+        '200':
+          "$ref": "#/components/responses/EmptySuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: delete
+          destructive: true
+          externallyVisible: false
+          exercised: false
+  "/organize/{lang}/api/custom-list/{listId}/recipes/{recipeId}":
+    delete:
+      tags:
+      - Organize
+      summary: Remove one recipe from a custom list
+      operationId: removeRecipeFromCustomList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/ListId"
+      - "$ref": "#/components/parameters/AnyRecipeId"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: delete
+          destructive: true
+          externallyVisible: false
+          exercised: false
+  "/organize/{lang}/api/managed-list":
+    get:
+      tags:
+      - Organize
+      summary: List saved official collections
+      operationId: listManagedLists
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/Page"
+      responses:
+        '200':
+          description: Preferred mobile representation; exact fields remain incompletely
+            observed.
+          content:
+            application/vnd.vorwerk.organize.managed-list.mobile+json:
+              schema:
+                "$ref": "#/components/schemas/UnknownJson"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    post:
+      tags:
+      - Organize
+      summary: Save an official collection
+      operationId: saveManagedList
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - collectionId
+              properties:
+                collectionId:
+                  type: string
+              additionalProperties: false
+            example:
+              collectionId: synthetic-collection-id
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/organize/{lang}/api/managed-list/{listId}":
+    delete:
+      tags:
+      - Organize
+      summary: Remove a saved official collection
+      operationId: removeManagedList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/ListId"
+      responses:
+        '200':
+          "$ref": "#/components/responses/EmptySuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: delete
+          destructive: true
+          externallyVisible: false
+          exercised: false
+  "/organize/{lang}/api/move-recipe":
+    post:
+      tags:
+      - Organize
+      summary: Move a recipe between organizer lists
+      operationId: moveRecipe
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/MoveRecipe"
+            example:
+              recipeId: r123456
+              targetListId: synthetic-target-list
+              srcListId: synthetic-source-list
+              targetListType: CUSTOM
+              srcListType: CUSTOM
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/organize/{lang}/api/shared-list":
+    post:
+      tags:
+      - Organize
+      summary: Start sharing a custom list
+      operationId: shareCustomList
+      description: Creates or refreshes a share link. This changes sharing state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - customListId
+              properties:
+                customListId:
+                  type: string
+              additionalProperties: false
+            example:
+              customListId: synthetic-list-id
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: public-share
+          destructive: false
+          externallyVisible: true
+          exercised: false
+  "/organize/{lang}/api/shared-list/{sharedListId}":
+    get:
+      tags:
+      - Organize
+      summary: Retrieve a shared list
+      operationId: getSharedList
+      security:
+      - cookieSession: []
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - name: sharedListId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    delete:
+      tags:
+      - Organize
+      summary: Revoke custom-list sharing
+      operationId: revokeSharedList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - name: sharedListId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          "$ref": "#/components/responses/EmptySuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: typed
+        risk:
+          effect: delete
+          destructive: true
+          externallyVisible: true
+          exercised: false
+  "/planning/{lang}/api/my-week/{dayKey}":
+    get:
+      tags:
+      - Planning
+      summary: Get the planning week containing a date
+      operationId: getPlanningWeek
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/DayKey"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/planning/{lang}/api/my-day":
+    put:
+      tags:
+      - Planning
+      summary: Add recipes to a calendar day
+      operationId: addRecipesToDay
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AddRecipesToDay"
+            example:
+              recipeIds:
+              - r123456
+              dayKey: '2026-01-15'
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/planning/{lang}/api/my-day/{dayKey}":
+    get:
+      tags:
+      - Planning
+      summary: Get one calendar day
+      operationId: getPlanningDay
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/DayKey"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    delete:
+      tags:
+      - Planning
+      summary: Remove all planned content for a date
+      operationId: removePlanningDay
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/DayKey"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: delete
+          destructive: true
+          externallyVisible: false
+          exercised: false
+  "/planning/{lang}/api/my-day/{dayKey}/recipes/{recipeId}":
+    delete:
+      tags:
+      - Planning
+      summary: Remove one recipe from a calendar day
+      operationId: removeRecipeFromDay
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/DayKey"
+      - "$ref": "#/components/parameters/AnyRecipeId"
+      - name: recipeSource
+        in: query
+        schema:
+          type: string
+          enum:
+          - CUSTOMER
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: delete
+          destructive: true
+          externallyVisible: false
+          exercised: false
+  "/planning/{lang}/api/my-day/move-recipe":
+    post:
+      tags:
+      - Planning
+      summary: Move a planned recipe between dates
+      operationId: movePlannedRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UnknownJson"
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/shopping/{lang}":
+    get:
+      tags:
+      - Shopping
+      summary: Get shopping list recipes, ingredients, and ad-hoc items
+      operationId: getShoppingList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - name: excludeComponent
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    delete:
+      tags:
+      - Shopping
+      summary: Clear the entire shopping list
+      operationId: clearShoppingList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      responses:
+        '200':
+          "$ref": "#/components/responses/EmptySuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: delete
+          destructive: true
+          externallyVisible: false
+          exercised: false
+  "/shopping/{lang}/recipes/add":
+    post:
+      tags:
+      - Shopping
+      summary: Add recipe ingredients to the shopping list
+      operationId: addRecipesToShoppingList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        "$ref": "#/components/requestBodies/RecipeIdsAddBody"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/shopping/{lang}/recipes/remove":
+    post:
+      tags:
+      - Shopping
+      summary: Remove recipe ingredients from the shopping list
+      operationId: removeRecipesFromShoppingList
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        "$ref": "#/components/requestBodies/RecipeIdsRemoveBody"
+      responses:
+        '200':
+          "$ref": "#/components/responses/EmptySuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/shopping/{lang}/owned-ingredients/ownership/edit":
+    post:
+      tags:
+      - Shopping
+      summary: Set ingredient ownership state
+      operationId: editIngredientOwnership
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - ingredients
+              properties:
+                ingredients:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/OwnedItemPatch"
+                  minItems: 1
+              additionalProperties: false
+            example:
+              ingredients:
+              - id: synthetic-ingredient-id
+                isOwned: true
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/shopping/{lang}/additional-items/add":
+    post:
+      tags:
+      - Shopping
+      summary: Add ad-hoc shopping items
+      operationId: addAdditionalShoppingItems
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - itemsValue
+              properties:
+                itemsValue:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  uniqueItems: true
+              additionalProperties: false
+            example:
+              itemsValue:
+              - Synthetic item
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/shopping/{lang}/additional-items/edit":
+    post:
+      tags:
+      - Shopping
+      summary: Rename ad-hoc shopping items
+      operationId: editAdditionalShoppingItems
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - additionalItems
+              properties:
+                additionalItems:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                    - id
+                    - name
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                    additionalProperties: false
+                  minItems: 1
+              additionalProperties: false
+            example:
+              additionalItems:
+              - id: synthetic-item-id
+                name: Synthetic item
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/shopping/{lang}/additional-items/ownership/edit":
+    post:
+      tags:
+      - Shopping
+      summary: Set ad-hoc item ownership state
+      operationId: editAdditionalItemOwnership
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - additionalItems
+              properties:
+                additionalItems:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/OwnedItemPatch"
+                  minItems: 1
+              additionalProperties: false
+            example:
+              additionalItems:
+              - id: synthetic-item-id
+                isOwned: true
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/shopping/{lang}/additional-items/remove":
+    post:
+      tags:
+      - Shopping
+      summary: Remove ad-hoc shopping items
+      operationId: removeAdditionalShoppingItems
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - additionalItemIDs
+              properties:
+                additionalItemIDs:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  uniqueItems: true
+              additionalProperties: false
+            example:
+              additionalItemIDs:
+              - synthetic-item-id
+      responses:
+        '200':
+          "$ref": "#/components/responses/EmptySuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/recipe-notes/{lang}/recipes":
+    post:
+      tags:
+      - Notes
+      summary: Create a private note for a recipe
+      operationId: createRecipeNote
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - recipeId
+              - text
+              properties:
+                recipeId:
+                  type: string
+                text:
+                  type: string
+              additionalProperties: false
+            example:
+              recipeId: r123456
+              text: Synthetic private note
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '201':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/recipe-notes/{lang}/recipes/{recipeId}":
+    get:
+      tags:
+      - Notes
+      summary: Get a private recipe note
+      operationId: getRecipeNote
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/AnyRecipeId"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '404':
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    put:
+      tags:
+      - Notes
+      summary: Replace a private recipe note
+      operationId: updateRecipeNote
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/AnyRecipeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - text
+              properties:
+                text:
+                  type: string
+              additionalProperties: false
+            example:
+              text: Synthetic private note updated
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+    delete:
+      tags:
+      - Notes
+      summary: Delete a private recipe note
+      operationId: deleteRecipeNote
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/AnyRecipeId"
+      responses:
+        '200':
+          "$ref": "#/components/responses/EmptySuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: delete
+          destructive: true
+          externallyVisible: false
+          exercised: false
+  "/rating/{lang}/aggregated-ratings/recipes/{recipeId}":
+    get:
+      tags:
+      - Ratings
+      summary: Get aggregate rating for a recipe
+      operationId: getAggregatedRecipeRating
+      security:
+      - cookieSession: []
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/RecipeId"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/rating/{lang}/user-ratings/recipes/{recipeId}":
+    put:
+      tags:
+      - Ratings
+      summary: Set the signed-in user's recipe rating
+      operationId: setUserRecipeRating
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/RecipeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - rating
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+              additionalProperties: false
+            example:
+              rating: 4
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: public-rating
+          destructive: false
+          externallyVisible: true
+          exercised: false
+  "/community/profile":
+    get:
+      tags:
+      - Profile
+      summary: Get the current user's community profile
+      operationId: getCommunityProfile
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/community/profile/{lang}":
+    put:
+      tags:
+      - Profile
+      summary: Update profile food preferences or accessories
+      operationId: updateCommunityProfile
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                food-preferences:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  uniqueItems: true
+                accessories:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  uniqueItems: true
+              additionalProperties: false
+            example:
+              food-preferences:
+              - synthetic-preference
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+        responseShape: unknown
+        risk:
+          effect: private-write
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/ownership/subscriptions":
+    get:
+      tags:
+      - Ownership
+      summary: List the current account's subscriptions
+      operationId: listSubscriptions
+      responses:
+        '200':
+          description: Subscription records.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+              example:
+              - status: ACTIVE
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: corroborated
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: external-clients-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - response
+        responseShape: partial
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/customer-devices/api/my-devices/versions":
+    get:
+      tags:
+      - Devices
+      summary: Get versions/capabilities for linked devices
+      operationId: getDeviceVersions
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+        responseShape: unknown
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/customer-devices/api/connected-device/links":
+    post:
+      tags:
+      - Devices
+      summary: Link or activate a connected device
+      operationId: linkConnectedDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UnknownJson"
+      responses:
+        '200':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '201':
+          "$ref": "#/components/responses/UnknownJsonSuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: advertised-only
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: public-discovery-2026-08-16
+          supports:
+          - path
+        responseShape: unknown
+        risk:
+          effect: device-link
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/customer-devices/{lang}/connected-device/links/{deviceId}:unlink":
+    post:
+      tags:
+      - Devices
+      summary: Unlink a connected device
+      operationId: unlinkConnectedDevice
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          "$ref": "#/components/responses/EmptySuccess"
+        '204':
+          "$ref": "#/components/responses/EmptySuccess"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
+        risk:
+          effect: device-link
+          destructive: true
+          externallyVisible: false
+          exercised: false
+  "/recipes/feed-v2/collections/bootstrap":
+    get:
+      tags:
+      - Feeds
+      summary: Bootstrap the collection change feed
+      operationId: bootstrapCollectionFeed
+      parameters:
+      - name: after
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Collection bootstrap document.
+          content:
+            application/hal+json:
+              schema:
+                "$ref": "#/components/schemas/FeedBootstrap"
+        '401':
+          "$ref": "#/components/responses/Error"
+        '403':
+          "$ref": "#/components/responses/Error"
+        '404':
+          "$ref": "#/components/responses/Error"
+      security:
+      - basicAuth: []
+      x-cookidoo:
+        status: vendor-spec
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: collection-feed-spec-5.6
+          supports:
+          - path
+          - method
+          - request
+          - response
+          - authentication
+        responseShape: partial
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/recipes/feed-v2/collections":
+    get:
+      tags:
+      - Feeds
+      summary: Read collection feed events
+      operationId: getCollectionFeed
+      parameters:
+      - name: after
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          "$ref": "#/components/schemas/FeedLimit"
+      responses:
+        '200':
+          description: Collection change feed.
+          content:
+            application/hal+json:
+              schema:
+                "$ref": "#/components/schemas/FeedBootstrap"
+        '401':
+          "$ref": "#/components/responses/Error"
+        '403':
+          "$ref": "#/components/responses/Error"
+        '404':
+          "$ref": "#/components/responses/Error"
+      security:
+      - basicAuth: []
+      x-cookidoo:
+        status: vendor-spec
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: collection-feed-spec-5.6
+          supports:
+          - path
+          - method
+          - request
+          - response
+          - authentication
+        responseShape: partial
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+  "/recipes/feed-v2/collections/pages":
+    get:
+      tags:
+      - Feeds
+      summary: Read a page of collection feed records
+      operationId: getCollectionFeedPage
+      parameters:
+      - name: pageBefore
+        in: query
+        required: true
+        description: ISO date-time or nonnegative Unix timestamp in seconds or milliseconds.
+        schema:
+          oneOf:
+          - type: string
+            format: date-time
+          - type: integer
+            minimum: 0
+      - name: limit
+        in: query
+        schema:
+          "$ref": "#/components/schemas/FeedLimit"
+      responses:
+        '200':
+          description: Collection feed page.
+          content:
+            application/hal+json:
+              schema:
+                "$ref": "#/components/schemas/FeedPage"
+        '303':
+          description: Redirect to the matching feed page.
+          headers:
+            Location:
+              description: Target feed page.
+              schema:
+                type: string
+                format: uri
+        '401':
+          "$ref": "#/components/responses/Error"
+        '403':
+          "$ref": "#/components/responses/Error"
+        '404':
+          "$ref": "#/components/responses/Error"
+      security:
+      - basicAuth: []
+      x-cookidoo:
+        status: vendor-spec
+        lastVerified: '2026-08-16'
+        market: pl
+        evidence:
+        - source: collection-feed-spec-5.6
+          supports:
+          - path
+          - method
+          - request
+          - response
+          - authentication
+        responseShape: partial
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
+components:
+  securitySchemes:
+    cookieSession:
+      type: apiKey
+      in: cookie
+      name: _oauth2_proxy
+      description: |-
+        Partial representation of the first-party browser session. Additional cookies
+        or CSRF protections may be required. Never paste live cookie values into
+        hosted documentation, generators, issues, or third-party tools.
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Authentication declared by the advertised collection-feed specification;
+        credentials are not documented here.
+  parameters:
+    Lang:
+      name: lang
+      in: path
+      required: true
+      schema:
+        type: string
+        default: pl
+        pattern: "^[a-z]{2}(?:-[A-Z]{2})?$"
+    RecipeId:
+      name: recipeId
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: "^r[0-9]+$"
+    AnyRecipeId:
+      name: recipeId
+      in: path
+      required: true
+      schema:
+        type: string
+    CustomerRecipeId:
+      name: customerRecipeId
+      in: path
+      required: true
+      schema:
+        "$ref": "#/components/schemas/CustomerRecipeId"
+    ListId:
+      name: listId
+      in: path
+      required: true
+      schema:
+        type: string
+    DayKey:
+      name: dayKey
+      in: path
+      required: true
+      schema:
+        type: string
+        format: date
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    XRequestedWith:
+      name: X-Requested-With
+      in: header
+      required: false
+      schema:
+        type: string
+        default: xmlhttprequest
+  requestBodies:
+    RecipeIdBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - recipeId
+            properties:
+              recipeId:
+                type: string
+            additionalProperties: false
+          example:
+            recipeId: r123456
+    RecipeIdsAddBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - recipeIDs
+            properties:
+              recipeIDs:
+                type: array
+                items:
+                  oneOf:
+                  - type: string
+                  - type: object
+                    required:
+                    - id
+                    - source
+                    properties:
+                      id:
+                        type: string
+                      source:
+                        type: string
+                        const: CUSTOMER
+                    additionalProperties: false
+                minItems: 1
+            additionalProperties: false
+          example:
+            recipeIDs:
+            - r123456
+    RecipeIdsRemoveBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - recipeIDs
+            additionalProperties: false
+            properties:
+              recipeIDs:
+                type: array
+                minItems: 1
+                uniqueItems: true
+                items:
+                  type: string
+          example:
+            recipeIDs:
+            - r123456
+  responses:
+    EmptySuccess:
+      description: Successful response with no required body.
+    Error:
+      description: Error response. The gateway may return JSON problem details or
+        HTML.
+      content:
+        application/json:
+          schema:
+            "$ref": "#/components/schemas/Problem"
+        text/html:
+          schema:
+            type: string
+        application/problem+json:
+          schema:
+            "$ref": "#/components/schemas/Problem"
+          example:
+            status: 400
+            title: Synthetic error
+    UnknownJsonSuccess:
+      description: Successful JSON response whose top-level shape has not been safely
+        verified.
+      content:
+        application/json:
+          schema:
+            "$ref": "#/components/schemas/UnknownJson"
+  schemas:
+    CustomerRecipeId:
+      type: string
+      description: ULID generated for a customer-created recipe.
+      pattern: "^[0-9A-HJKMNP-TV-Z]{26}$"
+    OfficialRecipe:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        recipeIngredientGroups:
+          type: array
+          items:
+            type: object
+      example:
+        id: r123456
+        name: Synthetic recipe
+        recipeIngredientGroups: []
+    CreateBlankRecipe:
+      type: object
+      required:
+      - recipeName
+      properties:
+        recipeName:
+          type: string
+          minLength: 1
+          maxLength: 120
+      additionalProperties: false
+      example:
+        recipeName: Synthetic recipe
+    CopyRecipe:
+      type: object
+      required:
+      - recipeUrl
+      properties:
+        recipeUrl:
+          type: string
+          format: uri
+        servingSize:
+          type: number
+          exclusiveMinimum: 0
+        partnerId:
+          type: string
+      additionalProperties: false
+      example:
+        recipeUrl: https://example.invalid/synthetic-recipe
+    CreatedRecipe:
+      type: object
+      required:
+      - recipeId
+      - recipeContent
+      additionalProperties: true
+      properties:
+        recipeId:
+          "$ref": "#/components/schemas/CustomerRecipeId"
+        authorId:
+          type: string
+        parentRecipeId:
+          type: string
+        status:
+          type: string
+        workStatus:
+          type: string
+          enum:
+          - PRIVATE
+          - PUBLIC
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
+        recipeContent:
+          "$ref": "#/components/schemas/RecipeContent"
+      example:
+        recipeId: 01ARZ3NDEKTSV4RRFFQ69G5FAV
+        status: PRIVATE
+        workStatus: PRIVATE
+        recipeContent:
+          name: Synthetic recipe
+    RecipeContent:
+      type: object
+      required:
+      - name
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        image:
+          type:
+          - string
+          - 'null'
+        ingredients:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Ingredient"
+        instructions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Instruction"
+        tools:
+          type: array
+          items:
+            type: string
+        yield:
+          "$ref": "#/components/schemas/RecipeYield"
+        prepTime:
+          type: integer
+          minimum: 0
+          description: Seconds
+        totalTime:
+          type: integer
+          minimum: 0
+          description: Seconds
+        hints: {}
+        recipeMetadata:
+          type: object
+          additionalProperties: true
+    CreatedRecipePatch:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        hints: {}
+        image:
+          type:
+          - string
+          - 'null'
+        isImageOwnedByUser:
+          type: boolean
+        isImageCopyrightOwned:
+          type: boolean
+        ingredients:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Ingredient"
+        instructions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Instruction"
+        tools:
+          type: array
+          items:
+            type: string
+        yield:
+          "$ref": "#/components/schemas/RecipeYield"
+        prepTime:
+          type: integer
+          minimum: 0
+        totalTime:
+          type: integer
+          minimum: 0
+        workStatus:
+          type: string
+          enum:
+          - PRIVATE
+          - PUBLIC
+        recipeMetadata:
+          type: object
+          additionalProperties: true
+      example:
+        name: Synthetic recipe updated
+    RecipeYield:
+      type:
+      - object
+      - 'null'
+      properties:
+        value:
+          type: number
+        unitText:
+          type: string
+    Ingredient:
+      type: object
+      required:
+      - type
+      - text
+      properties:
+        type:
+          type: string
+          const: INGREDIENT
+        text:
+          type: string
+    Instruction:
+      type: object
+      required:
+      - type
+      - text
+      additionalProperties: true
+      properties:
+        type:
+          type: string
+          const: STEP
+        text:
+          type: string
+        annotations:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        missedUsages:
+          type: array
+          items: {}
+    MoveRecipe:
+      type: object
+      required:
+      - recipeId
+      - targetListId
+      - srcListId
+      - targetListType
+      - srcListType
+      properties:
+        recipeId:
+          type: string
+        targetListId:
+          type: string
+        srcListId:
+          type: string
+        targetListType:
+          type: string
+        srcListType:
+          type: string
+      additionalProperties: false
+      example:
+        recipeId: r123456
+        targetListId: synthetic-target-list
+        srcListId: synthetic-source-list
+        targetListType: CUSTOM
+        srcListType: CUSTOM
+    AddRecipesToDay:
+      type: object
+      required:
+      - recipeIds
+      - dayKey
+      properties:
+        recipeIds:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          uniqueItems: true
+        dayKey:
+          type: string
+          format: date
+        recipeSource:
+          type: string
+          enum:
+          - CUSTOMER
+      additionalProperties: false
+      example:
+        recipeIds:
+        - r123456
+        dayKey: '2026-01-15'
+    OwnedItemPatch:
+      type: object
+      required:
+      - id
+      - isOwned
+      properties:
+        id:
+          type: string
+        isOwned:
+          type: boolean
+        ownedTimestamp:
+          type: integer
+          description: Unix timestamp in seconds.
+      additionalProperties: false
+      example:
+        id: synthetic-item-id
+        isOwned: true
+    Problem:
+      type: object
+      additionalProperties: true
+      properties:
+        status:
+          type: integer
+        statusCode:
+          type: integer
+        error:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        detail:
+          type: string
+      example:
+        status: 400
+        title: Synthetic error
+    UnknownJson:
+      description: Deliberately unconstrained JSON. No object shape is asserted.
+    FeedLimit:
+      type: string
+      enum:
+      - small
+      - medium
+      - large
+      default: medium
+    FeedBootstrap:
+      type: object
+      additionalProperties: true
+      description: Partial independently expressed collection bootstrap shape.
+      properties:
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/UnknownJson"
+        _links:
+          type: object
+          additionalProperties: true
+      example:
+        items: []
+        _links: {}
+    FeedPage:
+      type: object
+      additionalProperties: true
+      description: Partial independently expressed collection feed page shape.
+      properties:
+        lastItemULID:
+          "$ref": "#/components/schemas/CustomerRecipeId"
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/UnknownJson"
+        _links:
+          type: object
+          additionalProperties: true
+      example:
+        lastItemULID: 01ARZ3NDEKTSV4RRFFQ69G5FAV
+        items: []
+        _links: {}
+x-cookidoo-research:
+  market: pl
+  observedAt: '2026-08-16'
+  provenance: provenance/sources.yaml
+  scope: Full mapped surface; advertised-only operations remain explicitly unverified.
+  omittedEndpoint: "/search/api/subscription/token"
+  omissionReason: Credential-like response shape is intentionally not documented.

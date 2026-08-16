@@ -1,0 +1,65 @@
+version: 1
+project:
+  market: pl
+  locale: pl
+  observedAt: '2026-08-16'
+  policy: Raw captures and vendor-authored material are omitted; hashes identify private source artifacts only.
+
+sources:
+  - id: authenticated-ui-2026-08-16
+    kind: authenticated-ui
+    observedAt: '2026-08-16'
+    market: pl
+    sourceUrl: https://cookidoo.pl
+    clientVersions:
+      core: 29.18.2
+      organizer: 3.5.35
+      createdRecipes: 1.174.6
+      planning: 2.6.48
+      customerDevices: 4.6.1
+    sha256: 0f80a28cf803947f39a531deb8adcd109e7170f22f2649ffc13c6998eb554fc9
+    redistribution: omitted
+    sanitization: Account identifiers, content, session state, and the underlying observation artifact are not published.
+
+  - id: public-discovery-2026-08-16
+    kind: public-discovery
+    observedAt: '2026-08-16'
+    market: pl
+    sourceUrl: https://pl.web.production-eu.cookidoo.vorwerk-digital.com/.well-known/home
+    snapshotSha256: fc5dcee683738bd5f178cc17bf98a645778b7d4edc71c6a73622a24c805951f9
+    catalogSha256: a466452bbd8fcfc6e075da0c6b884a08dbd9acbcf215b5a356592435da8d941b
+    redistribution: omitted
+    sanitization: Only independently expressed route facts are retained; raw bodies, HTML, scripts, keys, and internal catalog relations are excluded.
+
+  - id: external-clients-2026-08-16
+    kind: independent-client
+    reviewedAt: '2026-08-16'
+    market: pl
+    redistribution: linked-only
+    sanitization: No source code, fixtures, requests, responses, or credentials are copied.
+    references:
+      - repository: https://github.com/miaucl/cookidoo-api
+        commit: 854f3b2ab31b088f1940b71f8512aacea107f657
+        license: MIT
+      - repository: https://github.com/recode-software/cookidoo-api
+        commit: 9edec8168642544a3a3eba7d9da564c866627f07
+        license: MIT
+
+  - id: collection-feed-spec-5.6
+    kind: advertised-vendor-specification
+    observedAt: '2026-08-16'
+    market: pl
+    version: '5.6'
+    sourceUrl: https://pl.web.production-eu.cookidoo.vorwerk-digital.com/recipes/feed-v2/.well-known/collections/documentation?version=5.6
+    sha256: 940db32cfcf742c76f10fb79a043176c12ef05c34515d6f2a00cb641280bda8b
+    redistribution: omitted
+    sanitization: Authentication, parameter, status, and media-type facts are independently re-expressed; the vendor document is not included.
+
+  - id: private-research-draft-2026-08-16
+    kind: private-draft
+    observedAt: '2026-08-16'
+    market: pl
+    specificationSha256: 66775e55fd7b9853538332b3646c2a11fc92982e8e6acc61eadcced7968f3bd0
+    notesSha256: 8e5997869ee2bd332dd6e3977c374fd70f3b905d11f2610add0eeb04b6d15c1c
+    redistribution: transformed-only
+    sanitization: Direct login steps, correlation identifiers, raw-evidence paths, and unsupported claims were removed from the public rewrite.

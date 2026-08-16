@@ -1,0 +1,28 @@
+{
+  "name": "cookidoo-openapi",
+  "version": "0.1.0",
+  "description": "Unofficial OpenAPI specification for the observed Cookidoo web API",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:output": "node scripts/prepare-output.mjs",
+    "lint": "redocly check-config && redocly lint",
+    "test:source": "node --test tests/source.test.mjs tests/safety.test.mjs",
+    "bundle": "npm run prepare:output && redocly bundle cookidoo@v0 --output dist/openapi.yaml",
+    "types": "npm run prepare:output && openapi-typescript",
+    "types:check": "tsc --noEmit --strict --skipLibCheck dist/openapi.d.ts",
+    "docs": "npm run prepare:output && redocly build-docs cookidoo@v0 --output dist/index.html --disableGoogleFont --theme.openapi.disableTelemetry",
+    "test:artifacts": "node --test tests/artifacts.test.mjs",
+    "check": "npm run lint && npm run test:source && npm run bundle && npm run types && npm run types:check && npm run docs && npm run test:artifacts"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "devDependencies": {
+    "@redocly/cli": "2.43.2",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "yaml": "2.9.0"
+  },
+  "license": "MIT"
+}

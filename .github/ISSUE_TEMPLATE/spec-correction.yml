@@ -1,0 +1,52 @@
+name: Specification correction
+description: Report a sanitized accuracy or provenance issue in the OpenAPI document.
+title: "spec: "
+labels: [specification]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not submit credentials, cookies, account/device identifiers, captured responses, recipes, HAR files, or service vulnerabilities.
+  - type: input
+    id: operation
+    attributes:
+      label: Operation
+      description: Provide the operationId or method and path template.
+      placeholder: getRecipe
+    validations:
+      required: true
+  - type: dropdown
+    id: evidence
+    attributes:
+      label: Evidence type
+      options:
+        - Public discovery
+        - Authenticated UI shape (sanitized)
+        - Frontend bundle observation
+        - Independent client at a pinned commit
+        - Other non-sensitive evidence
+    validations:
+      required: true
+  - type: input
+    id: context
+    attributes:
+      label: Market, date, and client version
+      placeholder: pl, YYYY-MM-DD, version if known
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Proposed correction
+      description: Describe the independently expressed interface fact without pasting a captured body.
+    validations:
+      required: true
+  - type: checkboxes
+    id: attestation
+    attributes:
+      label: Safety attestation
+      options:
+        - label: I used only an authorized context and did not bypass a technical restriction.
+          required: true
+        - label: This report contains no credentials, personal data, vendor content, captured response, or vulnerability details.
+          required: true

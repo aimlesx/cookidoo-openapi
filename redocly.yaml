@@ -1,0 +1,15 @@
+telemetry: off
+
+apis:
+  cookidoo@v0:
+    root: ./openapi.yaml
+    x-openapi-ts:
+      output: ./dist/openapi.d.ts
+
+extends:
+  - recommended-strict
+
+rules:
+  info-contact: off
+  operation-description: off
+  tag-description: off
