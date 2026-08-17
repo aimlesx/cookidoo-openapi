@@ -10,7 +10,7 @@ test("bundle preserves the canonical public surface", async () => {
   const methods = new Set(["get", "post", "put", "patch", "delete", "options", "head", "trace"]);
   const operations = Object.values(bundle.paths).flatMap((pathItem) => Object.entries(pathItem).filter(([method]) => methods.has(method)));
   assert.equal(Object.keys(bundle.paths).length, 44);
-  assert.equal(operations.length, 57);
+  assert.equal(operations.length, 58);
 });
 
 test("static documentation is generated without an execution control", async () => {

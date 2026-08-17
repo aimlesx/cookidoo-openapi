@@ -10,6 +10,7 @@ const EFFECT_VALUES = new Set(["read", "private-write", "delete", "public-share"
 
 const spec = parse(await readFile(new URL("../openapi.yaml", import.meta.url), "utf8"));
 const provenance = parse(await readFile(new URL("../provenance/sources.yaml", import.meta.url), "utf8"));
+const sourceRegistry = new Map(provenance.sources.map((source) => [source.id, source]));
 const sources = new Set(provenance.sources.map((source) => source.id));
 const operations = [];
 
@@ -33,7 +34,7 @@ function requestMedia(operation) {
 test("canonical surface remains complete and unique", () => {
   assert.equal(spec.openapi, "3.1.1");
   assert.equal(Object.keys(spec.paths).length, 44);
-  assert.equal(operations.length, 57);
+  assert.equal(operations.length, 58);
 
   const operationIds = operations.map(({ operation }) => operation.operationId);
   assert.equal(new Set(operationIds).size, operationIds.length);
@@ -61,11 +62,12 @@ test("path parameters and forbidden headers are modeled correctly", () => {
 
 test("every operation has explicit provenance, shape, security, and risk", () => {
   for (const { method, operation } of operations) {
-    assert.ok(Array.isArray(operation.security) && operation.security.length > 0, `${operation.operationId} security`);
+    assert.ok(Array.isArray(operation.security), `${operation.operationId} security`);
     const metadata = operation["x-cookidoo"];
     assert.ok(metadata, `${operation.operationId} metadata`);
     assert.ok(STATUS_VALUES.has(metadata.status), `${operation.operationId} status`);
-    assert.equal(metadata.lastVerified, "2026-08-16");
+    assert.match(metadata.lastVerified, /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok(metadata.lastVerified <= provenance.project.observedAt, `${operation.operationId} verification date`);
     assert.equal(metadata.market, "pl");
     assert.ok(SHAPE_VALUES.has(metadata.responseShape), `${operation.operationId} response shape`);
     assert.ok(Array.isArray(metadata.evidence) && metadata.evidence.length > 0, `${operation.operationId} evidence`);
@@ -75,11 +77,90 @@ test("every operation has explicit provenance, shape, security, and risk", () =>
       assert.ok(Array.isArray(evidence.supports) && evidence.supports.includes("path"));
     }
 
+    const evidenceDates = metadata.evidence
+      .map(({ source }) => sourceRegistry.get(source))
+      .map((source) => source.observedAt ?? source.reviewedAt)
+      .filter(Boolean)
+      .sort();
+    assert.equal(metadata.lastVerified, evidenceDates.at(-1), `${operation.operationId} freshest evidence`);
+
     assert.ok(EFFECT_VALUES.has(metadata.risk.effect), `${operation.operationId} risk effect`);
     for (const field of ["destructive", "externallyVisible", "exercised"]) {
       assert.equal(typeof metadata.risk[field], "boolean", `${operation.operationId} risk.${field}`);
     }
     if (method !== "get") assert.notEqual(metadata.risk.effect, "read", `${operation.operationId} mutation risk`);
+  }
+});
+
+test("coverage and the remaining advertised-only set are explicit", () => {
+  const count = (field, value) => operations.filter(({ operation }) => operation["x-cookidoo"][field] === value).length;
+  assert.deepEqual({
+    typed: count("responseShape", "typed"),
+    partial: count("responseShape", "partial"),
+    unknown: count("responseShape", "unknown")
+  }, { typed: 16, partial: 27, unknown: 15 });
+  assert.deepEqual({
+    observed: count("status", "observed"),
+    corroborated: count("status", "corroborated"),
+    advertisedOnly: count("status", "advertised-only"),
+    vendorSpec: count("status", "vendor-spec")
+  }, { observed: 32, corroborated: 19, advertisedOnly: 4, vendorSpec: 3 });
+
+  assert.deepEqual(
+    operations
+      .filter(({ operation }) => operation["x-cookidoo"].status === "advertised-only")
+      .map(({ operation }) => operation.operationId)
+      .sort(),
+    ["linkConnectedDevice", "movePlannedRecipe", "removePlanningDay", "revokeSharedList"]
+  );
+});
+
+test("confirmed public reads do not pretend to require a cookie session", () => {
+  const publicReads = new Set([
+    "getRecipe",
+    "getRecipeCluster",
+    "getRecipeClusterV2",
+    "search",
+    "searchStripe",
+    "searchIngredients",
+    "getPublicCreatedRecipe",
+    "getAggregatedRecipeRating"
+  ]);
+  for (const { operation } of operations) {
+    if (publicReads.has(operation.operationId)) assert.deepEqual(operation.security, [], operation.operationId);
+  }
+});
+
+test("search templates preserve opaque filter and pagination semantics", () => {
+  for (const operationId of ["search", "searchStripe", "searchIngredients"]) {
+    const operation = operations.find(({ operation }) => operation.operationId === operationId).operation;
+    const filters = operation.parameters.find((parameter) => parameter.name === "filters");
+    assert.equal(filters.style, "form");
+    assert.equal(filters.explode, true);
+    assert.equal(filters.schema.$ref, "#/components/schemas/SearchFilters");
+  }
+  const search = spec.paths["/search/api/{lang}/search"].get;
+  assert.equal(search.parameters.find(({ name }) => name === "pagination").schema.$ref, "#/components/schemas/OpaqueQueryScalar");
+  assert.equal(search.parameters.find(({ name }) => name === "limit").schema.$ref, "#/components/schemas/OpaqueQueryScalar");
+});
+
+test("newly verified response contracts remain wired", () => {
+  const create = spec.paths["/created-recipes/{lang}"].post;
+  const refs = create.responses["200"].content["application/json"].schema.anyOf.map(({ $ref }) => $ref);
+  assert.deepEqual(refs, ["#/components/schemas/CreatedRecipeCreated", "#/components/schemas/CreatedRecipe"]);
+  assert.equal(create.responses["201"], undefined);
+  assert.equal(create.responses["429"].headers["Retry-After"].$ref, "#/components/headers/RetryAfter");
+
+  const profileUpdate = spec.components.schemas.CommunityProfileUpdate;
+  assert.equal(profileUpdate.additionalProperties, false);
+  assert.equal(profileUpdate.properties["food-preferences"].minItems, undefined);
+  assert.equal(profileUpdate.properties.accessories.uniqueItems, undefined);
+  assert.deepEqual(profileUpdate.anyOf.map(({ required }) => required), [["food-preferences"], ["accessories"]]);
+
+  assert.equal(spec["x-cookidoo-authentication"].documentation, "docs/authentication.md");
+  assert.equal(spec["x-cookidoo-protocol-behavior"].documentation, "docs/protocol-behavior.md");
+  for (const evidence of spec["x-cookidoo-authentication"].evidence) {
+    assert.ok(sources.has(evidence.source), `authentication extension cites unknown source ${evidence.source}`);
   }
 });
 

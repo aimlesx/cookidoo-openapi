@@ -6,7 +6,7 @@ which claims that source supports.
 
 ## Manifest fields
 
-- `kind`: discovery, authenticated UI, private draft, vendor specification, or independent client;
+- `kind`: discovery, authenticated UI, public read-only observation, private draft, vendor specification, or independent client;
 - observation/review date and Polish market scope;
 - public source URL or pinned repository commit where appropriate;
 - SHA-256 for omitted local artifacts;
@@ -25,6 +25,7 @@ the repository:
 - raw discovery responses and response bodies;
 - the verbatim advertised collection-feed specification;
 - captured HTML, JavaScript, browser/session data, and authenticated responses;
+- temporary public response bodies used only to derive structural fingerprints;
 - broad internal/back-office catalogs;
 - recipes, media, notes, account data, and device identifiers.
 
@@ -38,3 +39,7 @@ Update the operation's status, last-verification date, supported-claim list,
 and risk classification together. Add or revise a manifest entry without
 committing the underlying capture. Advertised discovery alone supports a path,
 not a method, authentication requirement, request schema, or response schema.
+Low-volume public reads may additionally support method, authentication,
+status/media type, and structural response claims, but only for the observed
+inputs; empty and single-item samples remain explicitly partial where variants
+could differ.

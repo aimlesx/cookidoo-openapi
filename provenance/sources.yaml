@@ -2,7 +2,7 @@ version: 1
 project:
   market: pl
   locale: pl
-  observedAt: '2026-08-16'
+  observedAt: '2026-08-17'
   policy: Raw captures and vendor-authored material are omitted; hashes identify private source artifacts only.
 
 sources:
@@ -21,6 +21,18 @@ sources:
     redistribution: omitted
     sanitization: Account identifiers, content, session state, and the underlying observation artifact are not published.
 
+  - id: authenticated-ui-2026-08-17
+    kind: authenticated-ui
+    observedAt: '2026-08-17'
+    market: pl
+    sourceUrl: https://cookidoo.pl
+    clientVersions:
+      core: 29.18.2
+      createdRecipes: 1.174.6
+      planning: 2.6.50
+    redistribution: omitted
+    sanitization: Only route, field-name, media-negotiation, and response-consumer facts were retained. Account values, content, identifiers, session state, HTML, and JavaScript are not published.
+
   - id: public-discovery-2026-08-16
     kind: public-discovery
     observedAt: '2026-08-16'
@@ -31,12 +43,42 @@ sources:
     redistribution: omitted
     sanitization: Only independently expressed route facts are retained; raw bodies, HTML, scripts, keys, and internal catalog relations are excluded.
 
+  - id: oidc-discovery-2026-08-16
+    kind: public-oidc-discovery
+    observedAt: '2026-08-16'
+    market: pl
+    sourceUrl: https://ciam.prod.cookidoo.vorwerk-digital.com/.well-known/openid-configuration
+    redistribution: omitted
+    sanitization: Only independently expressed endpoint and capability facts are retained; the discovery body is not redistributed.
+
+  - id: public-live-reads-2026-08-17
+    kind: public-read-only-observation
+    observedAt: '2026-08-17'
+    market: pl
+    sourceUrl: https://cookidoo.pl
+    redistribution: structural-facts-only
+    sanitization: Low-volume unauthenticated GETs used synthetic or public inputs. Only status, media type, top-level kind, property names, and scalar types were retained; response bodies were deleted.
+
   - id: external-clients-2026-08-16
     kind: independent-client
     reviewedAt: '2026-08-16'
     market: pl
     redistribution: linked-only
     sanitization: No source code, fixtures, requests, responses, or credentials are copied.
+    references:
+      - repository: https://github.com/miaucl/cookidoo-api
+        commit: 854f3b2ab31b088f1940b71f8512aacea107f657
+        license: MIT
+      - repository: https://github.com/recode-software/cookidoo-api
+        commit: 9edec8168642544a3a3eba7d9da564c866627f07
+        license: MIT
+
+  - id: external-clients-2026-08-17
+    kind: independent-client
+    reviewedAt: '2026-08-17'
+    market: pl
+    redistribution: linked-only
+    sanitization: Current source was re-reviewed for independently expressible structural contracts. No source code, fixtures, requests, responses, credentials, or user content are copied.
     references:
       - repository: https://github.com/miaucl/cookidoo-api
         commit: 854f3b2ab31b088f1940b71f8512aacea107f657

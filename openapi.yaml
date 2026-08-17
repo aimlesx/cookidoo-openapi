@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: Cookidoo Web API (Unofficial)
-  version: 0.1.0
+  version: 0.2.0
   summary: Observed Cookidoo web API surface for the Polish market.
   description: |-
     Independently authored, unofficial research specification. Cookidoo does not
@@ -32,6 +32,62 @@ tags:
 - name: Devices
 - name: Ownership
 - name: Feeds
+x-cookidoo-authentication:
+  status: partial
+  documentation: docs/authentication.md
+  evidence:
+  - source: oidc-discovery-2026-08-16
+    supports:
+    - oidc-capabilities
+  - source: external-clients-2026-08-17
+    supports:
+    - redirect-flow
+    - cookie-session
+  - source: authenticated-ui-2026-08-17
+    supports:
+    - form-behavior
+    - csrf-observations
+  loginEntryPoint: "/profile/{lang}/login"
+  redirectParameter: redirectAfterLogin
+  oidcDiscovery: https://ciam.prod.cookidoo.vorwerk-digital.com/.well-known/openid-configuration
+  firstPartyFlow:
+    protocol: authorization-code
+    pkce: corroborated
+    browserRedirects: true
+    loginForm:
+      action: dynamic-first-party-action
+      contentType: application/x-www-form-urlencoded
+      fields:
+      - requestId
+      - username
+      - password
+    callback: /oauth2/callback
+  marketApiSession:
+    mechanism: cookie-jar
+    completeCookieSet: unknown
+    knownSessionCookie: _oauth2_proxy
+    uiMarkerCookie: v-authenticated
+  logout:
+    uiEntryPoint: /profile/logout
+    completeSequence: unknown
+  csrf:
+    genericRule: unknown
+    xRequestedWith: observed-ajax-marker
+    inspectedGeneralFormsToken: not-observed
+    originOrRefererEnforcement: unknown
+    consentSpecificRule:
+      cookie: csrf_
+      header: X-Csrf-Token
+      generalizable: false
+x-cookidoo-protocol-behavior:
+  status: partial
+  documentation: docs/protocol-behavior.md
+  idempotencyKey: not-observed
+  automaticMutationRetries: unsafe-without-reconciliation
+  publishedRateLimit: unknown
+  retryAfter: optional-when-present
+  conditionalWrites: not-observed
+  concurrencyGuarantee: unknown
 paths:
   "/recipes/recipe/{lang}/{recipeId}":
     get:
@@ -54,11 +110,10 @@ paths:
           "$ref": "#/components/responses/Error"
         default:
           "$ref": "#/components/responses/Error"
-      security:
-      - cookieSession: []
+      security: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: external-clients-2026-08-16
@@ -67,6 +122,12 @@ paths:
           - method
           - authentication
           - request
+          - response
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
           - response
         responseShape: typed
         risk:
@@ -79,6 +140,12 @@ paths:
       tags:
       - Recipes
       summary: Get variants in a recipe cluster
+      description: |-
+        Legacy compatibility route advertised by HAL discovery. A public
+        synthetic miss confirmed an unauthenticated JSON array response. A
+        low-volume public read of a non-empty cluster linked from an official
+        recipe confirmed the modeled core item fields; other cluster variants
+        and optional fields remain partial.
       operationId: getRecipeCluster
       parameters:
       - name: clusterId
@@ -88,22 +155,32 @@ paths:
           type: string
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Recipe cluster array with observed core item fields; additional variants remain partial.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/RecipeClusterV1Response"
         '401':
           "$ref": "#/components/responses/Error"
         default:
           "$ref": "#/components/responses/Error"
-      security:
-      - cookieSession: []
+      security: []
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
-        responseShape: unknown
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - response
+        responseShape: partial
+        authentication: not-required-for-observed-read
         risk:
           effect: read
           destructive: false
@@ -114,6 +191,11 @@ paths:
       tags:
       - Recipes
       summary: Get variants in a recipe cluster (v2)
+      description: |-
+        Separately advertised v2 compatibility route. Public empty and
+        non-empty reads confirmed the same top-level array kind as v1 and the
+        modeled core fields, including `languageTag`; other cluster variants
+        and optional fields remain partial.
       operationId: getRecipeClusterV2
       parameters:
       - name: clusterId
@@ -123,22 +205,32 @@ paths:
           type: string
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Recipe cluster array with observed core item fields; additional variants remain partial.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/RecipeClusterV2Response"
         '401':
           "$ref": "#/components/responses/Error"
         default:
           "$ref": "#/components/responses/Error"
-      security:
-      - cookieSession: []
+      security: []
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
-        responseShape: unknown
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - response
+        responseShape: partial
+        authentication: not-required-for-observed-read
         risk:
           effect: read
           destructive: false
@@ -149,6 +241,12 @@ paths:
       tags:
       - Search
       summary: Search recipes and collections
+      description: |-
+        Advertised legacy API route. The current web search uses a different
+        client-side search backend. A public synthetic miss confirmed a JSON
+        object with a `data` array, while result items, filters, and pagination
+        remain partial. `filters*` is modeled as an exploded map because the RFC
+        6570 template does not advertise repeated `filters=` array values.
       operationId: search
       parameters:
       - "$ref": "#/components/parameters/Lang"
@@ -162,11 +260,9 @@ paths:
           type: string
       - name: filters
         in: query
-        description: Repeated service-specific filter expressions.
+        description: Exploded service-specific filter map; value grammar is not verified.
         schema:
-          type: array
-          items:
-            type: string
+          "$ref": "#/components/schemas/SearchFilters"
         style: form
         explode: true
       - name: focus
@@ -175,31 +271,42 @@ paths:
           type: string
       - name: pagination
         in: query
+        description: Opaque scalar; page-number versus cursor semantics are unverified.
         schema:
-          type: string
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
       - name: limit
         in: query
+        description: Opaque scalar advertised by the URI template; range and unit are unverified.
         schema:
-          type: integer
-          minimum: 1
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Search result envelope with partially known items.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SearchResultResponse"
         '401':
           "$ref": "#/components/responses/Error"
         default:
           "$ref": "#/components/responses/Error"
-      security:
-      - cookieSession: []
+      security: []
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
-        responseShape: unknown
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - response
+        responseShape: partial
+        authentication: not-required-for-observed-read
         risk:
           effect: read
           destructive: false
@@ -210,6 +317,11 @@ paths:
       tags:
       - Search
       summary: Retrieve a search result stripe
+      description: |-
+        Advertised legacy API route. Scalar query variables are intentionally
+        not narrowed to booleans or integers where discovery proves only their
+        names. A public synthetic miss confirmed a JSON object with a `data`
+        array; stripe item fields remain unverified.
       operationId: searchStripe
       parameters:
       - "$ref": "#/components/parameters/Lang"
@@ -228,7 +340,7 @@ paths:
       - name: limit
         in: query
         schema:
-          type: integer
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
       - name: exclude
         in: query
         schema:
@@ -244,38 +356,46 @@ paths:
       - name: includeRating
         in: query
         schema:
-          type: boolean
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
       - name: lazyLoading
         in: query
         schema:
-          type: boolean
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
       - name: filters
         in: query
-        description: Repeated service-specific filter expressions.
+        description: Exploded service-specific filter map; value grammar is not verified.
         style: form
         explode: true
         schema:
-          type: array
-          items:
-            type: string
+          "$ref": "#/components/schemas/SearchFilters"
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Search stripe envelope with partially known items.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SearchResultResponse"
         '401':
           "$ref": "#/components/responses/Error"
         default:
           "$ref": "#/components/responses/Error"
-      security:
-      - cookieSession: []
+      security: []
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
-        responseShape: unknown
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - response
+        responseShape: partial
+        authentication: not-required-for-observed-read
         risk:
           effect: read
           destructive: false
@@ -286,6 +406,10 @@ paths:
       tags:
       - Search
       summary: Search ingredient filter values
+      description: |-
+        Advertised legacy suggestion route. A public synthetic miss confirmed a
+        JSON object with an `ingredients` array. Item fields, filter grammar,
+        and limit semantics remain unverified.
       operationId: searchIngredients
       parameters:
       - name: query
@@ -295,10 +419,8 @@ paths:
       - name: filters
         in: query
         schema:
-          type: array
-          items:
-            type: string
-        description: Repeated service-specific filter expressions.
+          "$ref": "#/components/schemas/SearchFilters"
+        description: Exploded service-specific filter map; value grammar is not verified.
         style: form
         explode: true
       - name: language
@@ -308,25 +430,35 @@ paths:
       - name: limit
         in: query
         schema:
-          type: integer
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Ingredient suggestion envelope with partially known items.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/IngredientSearchResponse"
         '401':
           "$ref": "#/components/responses/Error"
         default:
           "$ref": "#/components/responses/Error"
-      security:
-      - cookieSession: []
+      security: []
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
-        responseShape: unknown
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - response
+        responseShape: partial
+        authentication: not-required-for-observed-read
         risk:
           effect: read
           destructive: false
@@ -359,7 +491,11 @@ paths:
           type: boolean
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Created-recipe list; both direct arrays and envelopes are in current use.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CreatedRecipeList"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -367,18 +503,23 @@ paths:
       security:
       - cookieSession: []
       x-cookidoo:
-        status: observed
-        lastVerified: '2026-08-16'
+        status: corroborated
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: authenticated-ui-2026-08-16
+        - source: authenticated-ui-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
+        - source: external-clients-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
           - response
-        responseShape: unknown
+        responseShape: partial
         risk:
           effect: read
           destructive: false
@@ -404,22 +545,21 @@ paths:
               recipeName: Synthetic recipe
       responses:
         '200':
-          description: Created recipe or an object containing its new recipe ID.
+          description: |-
+            JSON/XHR creation result. The current first-party UI consumes the ID
+            representation; an independent client also supports a full-recipe
+            representation for copy/import negotiation.
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
+                - "$ref": "#/components/schemas/CreatedRecipeCreated"
                 - "$ref": "#/components/schemas/CreatedRecipe"
-                - type: object
-                  required:
-                  - recipeId
-                  properties:
-                    recipeId:
-                      "$ref": "#/components/schemas/CustomerRecipeId"
-        '201':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
         '429':
           description: Import/copy rate limited.
+          headers:
+            Retry-After:
+              "$ref": "#/components/headers/RetryAfter"
           content:
             application/json:
               schema:
@@ -430,7 +570,7 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: authenticated-ui-2026-08-16
@@ -439,7 +579,21 @@ paths:
           - method
           - authentication
           - request
-        responseShape: unknown
+        - source: authenticated-ui-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        - source: external-clients-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: typed
         risk:
           effect: private-write
           destructive: false
@@ -580,27 +734,36 @@ paths:
       - Created recipes
       summary: Get a publicly shared created recipe
       operationId: getPublicCreatedRecipe
-      security:
-      - cookieSession: []
+      security: []
       parameters:
       - "$ref": "#/components/parameters/Lang"
       - "$ref": "#/components/parameters/CustomerRecipeId"
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Public created-recipe representation.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/PublicCreatedRecipe"
         '401':
           "$ref": "#/components/responses/Error"
         default:
           "$ref": "#/components/responses/Error"
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
-        responseShape: unknown
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - response
+        responseShape: typed
         risk:
           effect: read
           destructive: false
@@ -699,7 +862,7 @@ paths:
           content:
             application/vnd.vorwerk.organize.custom-list.mobile+json:
               schema:
-                "$ref": "#/components/schemas/UnknownJson"
+                "$ref": "#/components/schemas/CustomListPage"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -708,16 +871,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: read
           destructive: false
@@ -755,9 +919,11 @@ paths:
               - r123456
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
-        '201':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Created custom list in a mutation envelope.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CustomListMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -766,7 +932,7 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: authenticated-ui-2026-08-16
@@ -775,7 +941,14 @@ paths:
           - method
           - authentication
           - request
-        responseShape: unknown
+        - source: external-clients-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: partial
         risk:
           effect: private-write
           destructive: false
@@ -800,13 +973,18 @@ paths:
       security:
       - cookieSession: []
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
         responseShape: unknown
         risk:
           effect: read
@@ -852,7 +1030,11 @@ paths:
               title: Synthetic list renamed
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Updated custom list in a mutation envelope.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CustomListMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -861,7 +1043,7 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: authenticated-ui-2026-08-16
@@ -870,7 +1052,14 @@ paths:
           - method
           - authentication
           - request
-        responseShape: unknown
+        - source: external-clients-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: partial
         risk:
           effect: private-write
           destructive: false
@@ -925,7 +1114,11 @@ paths:
       - "$ref": "#/components/parameters/AnyRecipeId"
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Updated custom list after removing the recipe.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CustomListMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -934,7 +1127,7 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: authenticated-ui-2026-08-16
@@ -943,7 +1136,14 @@ paths:
           - method
           - authentication
           - request
-        responseShape: unknown
+        - source: external-clients-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: partial
         risk:
           effect: delete
           destructive: true
@@ -965,7 +1165,7 @@ paths:
           content:
             application/vnd.vorwerk.organize.managed-list.mobile+json:
               schema:
-                "$ref": "#/components/schemas/UnknownJson"
+                "$ref": "#/components/schemas/ManagedListPage"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -974,16 +1174,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: read
           destructive: false
@@ -1012,7 +1213,11 @@ paths:
       - "$ref": "#/components/parameters/Lang"
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Saved managed list in a mutation envelope.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ManagedListMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1021,16 +1226,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: private-write
           destructive: false
@@ -1192,13 +1398,18 @@ paths:
         default:
           "$ref": "#/components/responses/Error"
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
         responseShape: unknown
         risk:
           effect: read
@@ -1219,7 +1430,7 @@ paths:
           type: string
       responses:
         '200':
-          "$ref": "#/components/responses/EmptySuccess"
+          "$ref": "#/components/responses/UnknownJsonSuccess"
         '204':
           "$ref": "#/components/responses/EmptySuccess"
         '401':
@@ -1236,7 +1447,7 @@ paths:
         - source: public-discovery-2026-08-16
           supports:
           - path
-        responseShape: typed
+        responseShape: unknown
         risk:
           effect: delete
           destructive: true
@@ -1253,7 +1464,11 @@ paths:
       - "$ref": "#/components/parameters/DayKey"
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Week envelope containing planned days.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/PlanningWeek"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1262,16 +1477,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: read
           destructive: false
@@ -1297,7 +1513,11 @@ paths:
       - "$ref": "#/components/parameters/Lang"
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Updated planning day in a mutation envelope.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/PlanningMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1306,7 +1526,7 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: authenticated-ui-2026-08-16
@@ -1315,7 +1535,14 @@ paths:
           - method
           - authentication
           - request
-        responseShape: unknown
+        - source: external-clients-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: partial
         risk:
           effect: private-write
           destructive: false
@@ -1326,6 +1553,10 @@ paths:
       tags:
       - Planning
       summary: Get one calendar day
+      description: |-
+        Advertised compatibility route. The current planning UI uses separate
+        calendar and my-day routes, so GET semantics and response shape here
+        remain unverified.
       operationId: getPlanningDay
       parameters:
       - "$ref": "#/components/parameters/Lang"
@@ -1340,13 +1571,18 @@ paths:
       security:
       - cookieSession: []
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
         responseShape: unknown
         risk:
           effect: read
@@ -1357,6 +1593,10 @@ paths:
       tags:
       - Planning
       summary: Remove all planned content for a date
+      description: |-
+        Advertised compatibility operation inferred from the route. It was not
+        exercised because it could remove existing account data, and the
+        current planning UI did not confirm this exact operation.
       operationId: removePlanningDay
       parameters:
       - "$ref": "#/components/parameters/Lang"
@@ -1404,7 +1644,11 @@ paths:
           - CUSTOMER
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Updated planning day in a mutation envelope.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/PlanningMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1413,16 +1657,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: delete
           destructive: true
@@ -1433,6 +1678,10 @@ paths:
       tags:
       - Planning
       summary: Move a planned recipe between dates
+      description: |-
+        Advertised compatibility operation. Current first-party code exposes a
+        move result containing old/new day keys and recipe identity, but it does
+        not establish that this legacy route uses the same request or response.
       operationId: movePlannedRecipe
       requestBody:
         required: true
@@ -1470,6 +1719,9 @@ paths:
       tags:
       - Shopping
       summary: Get shopping list recipes, ingredients, and ad-hoc items
+      description: |-
+        JSON representation selected by `Accept: application/json`. A normal
+        browser navigation may negotiate HTML instead.
       operationId: getShoppingList
       parameters:
       - "$ref": "#/components/parameters/Lang"
@@ -1479,7 +1731,11 @@ paths:
           type: string
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Current shopping-list representation.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ShoppingList"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1488,7 +1744,7 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: authenticated-ui-2026-08-16
@@ -1497,7 +1753,14 @@ paths:
           - method
           - authentication
           - request
-        responseShape: unknown
+        - source: external-clients-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        responseShape: partial
         risk:
           effect: read
           destructive: false
@@ -1551,7 +1814,11 @@ paths:
         "$ref": "#/components/requestBodies/RecipeIdsAddBody"
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Recipes added to the shopping list.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ShoppingRecipeMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1560,16 +1827,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: private-write
           destructive: false
@@ -1643,7 +1911,11 @@ paths:
                 isOwned: true
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Updated ingredient entries.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ShoppingIngredientMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1652,16 +1924,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: private-write
           destructive: false
@@ -1696,7 +1969,11 @@ paths:
               - Synthetic item
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Added ad-hoc items.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AdditionalShoppingItemsMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1705,16 +1982,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: private-write
           destructive: false
@@ -1758,7 +2036,11 @@ paths:
                 name: Synthetic item
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Updated ad-hoc items.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AdditionalShoppingItemsMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1767,16 +2049,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: private-write
           destructive: false
@@ -1811,7 +2094,11 @@ paths:
                 isOwned: true
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Updated ad-hoc item ownership states.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AdditionalShoppingItemsMutationResult"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1820,16 +2107,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: private-write
           destructive: false
@@ -1899,6 +2187,7 @@ paths:
       operationId: createRecipeNote
       parameters:
       - "$ref": "#/components/parameters/Lang"
+      - "$ref": "#/components/parameters/XRequestedWith"
       requestBody:
         required: true
         content:
@@ -1919,9 +2208,11 @@ paths:
               text: Synthetic private note
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
-        '201':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Created note.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/RecipeNote"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -1930,16 +2221,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: authenticated-ui-2026-08-16
+        - source: authenticated-ui-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: typed
         risk:
           effect: private-write
           destructive: false
@@ -1950,6 +2242,10 @@ paths:
       tags:
       - Notes
       summary: Get a private recipe note
+      description: |-
+        Discovery advertises this JSON-looking route, while the current recipe
+        page loads a separate HTML partial for display. The GET representation
+        therefore remains unverified even though writes use this route family.
       operationId: getRecipeNote
       parameters:
       - "$ref": "#/components/parameters/Lang"
@@ -1962,13 +2258,18 @@ paths:
       security:
       - cookieSession: []
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
         responseShape: unknown
         risk:
           effect: read
@@ -1983,6 +2284,7 @@ paths:
       parameters:
       - "$ref": "#/components/parameters/Lang"
       - "$ref": "#/components/parameters/AnyRecipeId"
+      - "$ref": "#/components/parameters/XRequestedWith"
       requestBody:
         required: true
         content:
@@ -1999,7 +2301,11 @@ paths:
               text: Synthetic private note updated
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Updated note.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/RecipeNote"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -2008,16 +2314,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: authenticated-ui-2026-08-16
+        - source: authenticated-ui-2026-08-17
           supports:
           - path
           - method
           - authentication
           - request
-        responseShape: unknown
+          - response
+        responseShape: typed
         risk:
           effect: private-write
           destructive: false
@@ -2031,6 +2338,7 @@ paths:
       parameters:
       - "$ref": "#/components/parameters/Lang"
       - "$ref": "#/components/parameters/AnyRecipeId"
+      - "$ref": "#/components/parameters/XRequestedWith"
       responses:
         '200':
           "$ref": "#/components/responses/EmptySuccess"
@@ -2044,10 +2352,10 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: authenticated-ui-2026-08-16
+        - source: authenticated-ui-2026-08-17
           supports:
           - path
           - method
@@ -2065,28 +2373,40 @@ paths:
       tags:
       - Ratings
       summary: Get aggregate rating for a recipe
+      description: |-
+        Public read confirmed independently of the server-rendered rating shown
+        on recipe pages.
       operationId: getAggregatedRecipeRating
-      security:
-      - cookieSession: []
+      security: []
       parameters:
       - "$ref": "#/components/parameters/Lang"
       - "$ref": "#/components/parameters/RecipeId"
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Aggregate rating counters and update time.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AggregatedRecipeRating"
         '401':
           "$ref": "#/components/responses/Error"
         default:
           "$ref": "#/components/responses/Error"
       x-cookidoo:
-        status: advertised-only
-        lastVerified: '2026-08-16'
+        status: observed
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: public-discovery-2026-08-16
           supports:
           - path
-        responseShape: unknown
+        - source: public-live-reads-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - response
+        responseShape: typed
         risk:
           effect: read
           destructive: false
@@ -2101,6 +2421,7 @@ paths:
       parameters:
       - "$ref": "#/components/parameters/Lang"
       - "$ref": "#/components/parameters/RecipeId"
+      - "$ref": "#/components/parameters/XRequestedWith"
       requestBody:
         required: true
         content:
@@ -2128,10 +2449,10 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: authenticated-ui-2026-08-16
+        - source: authenticated-ui-2026-08-17
           supports:
           - path
           - method
@@ -2151,7 +2472,11 @@ paths:
       operationId: getCommunityProfile
       responses:
         '200':
-          "$ref": "#/components/responses/UnknownJsonSuccess"
+          description: Current user's community profile.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CommunityProfile"
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -2160,21 +2485,59 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
           - authentication
-        responseShape: unknown
+          - response
+        responseShape: partial
         risk:
           effect: read
           destructive: false
           externallyVisible: false
           exercised: false
   "/community/profile/{lang}":
+    get:
+      tags:
+      - Profile
+      summary: Get the localized current-user community profile
+      operationId: getLocalizedCommunityProfile
+      parameters:
+      - "$ref": "#/components/parameters/Lang"
+      responses:
+        '200':
+          description: Localized community profile selected as JSON by the current UI.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CommunityProfile"
+        '401':
+          "$ref": "#/components/responses/Error"
+        default:
+          "$ref": "#/components/responses/Error"
+      security:
+      - cookieSession: []
+      x-cookidoo:
+        status: observed
+        lastVerified: '2026-08-17'
+        market: pl
+        evidence:
+        - source: authenticated-ui-2026-08-17
+          supports:
+          - path
+          - method
+          - authentication
+          - response
+        responseShape: partial
+        risk:
+          effect: read
+          destructive: false
+          externallyVisible: false
+          exercised: false
     put:
       tags:
       - Profile
@@ -2187,21 +2550,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                food-preferences:
-                  type: array
-                  items:
-                    type: string
-                  minItems: 1
-                  uniqueItems: true
-                accessories:
-                  type: array
-                  items:
-                    type: string
-                  minItems: 1
-                  uniqueItems: true
-              additionalProperties: false
+              "$ref": "#/components/schemas/CommunityProfileUpdate"
             example:
               food-preferences:
               - synthetic-preference
@@ -2243,12 +2592,16 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  additionalProperties: true
+                "$ref": "#/components/schemas/SubscriptionList"
               example:
-              - status: ACTIVE
+              - active: true
+                expires: '2027-01-01'
+                startDate: '2026-01-01'
+                status: ACTIVE
+                subscriptionLevel: synthetic-level
+                subscriptionSource: synthetic-source
+                type: synthetic-type
+                extendedType: synthetic-extended-type
         '401':
           "$ref": "#/components/responses/Error"
         default:
@@ -2257,10 +2610,10 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: corroborated
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
-        - source: external-clients-2026-08-16
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
@@ -2543,9 +2896,12 @@ components:
       in: cookie
       name: _oauth2_proxy
       description: |-
-        Partial representation of the first-party browser session. Additional cookies
-        or CSRF protections may be required. Never paste live cookie values into
-        hosted documentation, generators, issues, or third-party tools.
+        Partial representation of the first-party browser session. A current
+        client also preserves `v-authenticated`, but that client-readable marker
+        is not treated as an authentication credential. The complete cookie jar,
+        attributes, renewal, and CSRF requirements remain unknown. Never paste
+        live values into hosted documentation, generators, issues, or third-party
+        tools.
     basicAuth:
       type: http
       scheme: basic
@@ -2603,6 +2959,9 @@ components:
       name: X-Requested-With
       in: header
       required: false
+      description: |-
+        Marker added by the current first-party AJAX form helper. It is not proof
+        that CSRF requirements have been satisfied.
       schema:
         type: string
         default: xmlhttprequest
@@ -2670,6 +3029,19 @@ components:
           example:
             recipeIDs:
             - r123456
+  headers:
+    RetryAfter:
+      description: |-
+        Server-requested delay when present. Absence does not imply that an
+        immediate retry is safe, especially for mutations with an ambiguous
+        outcome.
+      schema:
+        oneOf:
+        - type: integer
+          minimum: 0
+          description: Delay in seconds.
+        - type: string
+          description: HTTP-date.
   responses:
     EmptySuccess:
       description: Successful response with no required body.
@@ -2701,6 +3073,178 @@ components:
       type: string
       description: ULID generated for a customer-created recipe.
       pattern: "^[0-9A-HJKMNP-TV-Z]{26}$"
+    OpaqueQueryScalar:
+      description: Scalar URI-template value whose concrete type is not verified.
+      oneOf:
+      - type: string
+      - type: number
+      - type: boolean
+    SearchFilters:
+      type: object
+      description: |-
+        Form-exploded filter map. Named properties come from advertised search
+        links; value delimiters, repetition, enums, units, and ranges remain
+        unverified.
+      properties:
+        tags:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        categories:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        ratings:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        preparationTime:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        portions:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        difficulty:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        totalTime:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        tmv:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        countries:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        languages:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        additionalDevices:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        accessories:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        sortby:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        ids:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        ingredients:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        excludeIngredients:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        excludeTags:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        exclude:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+        like:
+          "$ref": "#/components/schemas/OpaqueQueryScalar"
+      additionalProperties:
+        "$ref": "#/components/schemas/OpaqueQueryScalar"
+    RecipeClusterEntryV1:
+      type: object
+      required:
+      - recipe_id
+      - notation
+      - quantity
+      - types
+      additionalProperties: true
+      properties:
+        recipe_id:
+          type: string
+        notation:
+          type: string
+        quantity:
+          type: string
+        types:
+          type: array
+          items:
+            type: string
+    RecipeClusterEntryV2:
+      type: object
+      required:
+      - recipe_id
+      - notation
+      - quantity
+      - types
+      - languageTag
+      additionalProperties: true
+      properties:
+        recipe_id:
+          type: string
+        notation:
+          type: string
+        quantity:
+          type: string
+        types:
+          type: array
+          items:
+            type: string
+        languageTag:
+          type: string
+    RecipeClusterV1Response:
+      type: array
+      description: Core item fields from a low-volume public cluster read.
+      items:
+        "$ref": "#/components/schemas/RecipeClusterEntryV1"
+    RecipeClusterV2Response:
+      type: array
+      description: V2 adds a language tag to the independently modeled v1 core.
+      items:
+        "$ref": "#/components/schemas/RecipeClusterEntryV2"
+    SearchRecipeCard:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        objectID:
+          type: string
+        title:
+          type: string
+        image:
+          type: string
+        descriptiveAssets:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ImageAsset"
+        totalTime:
+          type: number
+        rating:
+          type: number
+        numberOfRatings:
+          type: number
+        publishedAt:
+          type: string
+    SearchResultResponse:
+      type: object
+      required:
+      - data
+      additionalProperties: true
+      properties:
+        data:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SearchRecipeCard"
+    IngredientSuggestion:
+      type: object
+      additionalProperties: true
+      properties:
+        title:
+          type: string
+        highlighted:
+          type: string
+        occurrencesInRecipes:
+          type: number
+    IngredientSearchResponse:
+      type: object
+      required:
+      - ingredients
+      additionalProperties: true
+      properties:
+        ingredients:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IngredientSuggestion"
+    AggregatedRecipeRating:
+      type: object
+      required:
+      - aggregatedRating
+      - numberOfRatings
+      - updatedAt
+      additionalProperties: true
+      properties:
+        aggregatedRating:
+          type: number
+        numberOfRatings:
+          type: number
+        updatedAt:
+          type: string
     OfficialRecipe:
       type: object
       additionalProperties: true
@@ -2745,6 +3289,66 @@ components:
       additionalProperties: false
       example:
         recipeUrl: https://example.invalid/synthetic-recipe
+    CreatedRecipeCreated:
+      type: object
+      required:
+      - recipeId
+      additionalProperties: true
+      properties:
+        recipeId:
+          "$ref": "#/components/schemas/CustomerRecipeId"
+        parentRecipeId:
+          type: string
+      example:
+        recipeId: 01ARZ3NDEKTSV4RRFFQ69G5FAV
+    CreatedRecipeSummary:
+      type: object
+      required:
+      - recipeId
+      - name
+      additionalProperties: true
+      properties:
+        recipeId:
+          "$ref": "#/components/schemas/CustomerRecipeId"
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
+    CreatedRecipeListItem:
+      type: object
+      required:
+      - recipeId
+      additionalProperties: true
+      properties:
+        recipeId:
+          "$ref": "#/components/schemas/CustomerRecipeId"
+        recipeContent:
+          type: object
+          additionalProperties: true
+          properties:
+            name:
+              type: string
+    CreatedRecipeList:
+      description: Partial list contract; current clients tolerate multiple envelopes.
+      oneOf:
+      - type: array
+        items:
+          "$ref": "#/components/schemas/CreatedRecipeSummary"
+      - type: object
+        additionalProperties: true
+        properties:
+          items:
+            type: array
+            items:
+              "$ref": "#/components/schemas/CreatedRecipeListItem"
+          data:
+            type: array
+            items:
+              "$ref": "#/components/schemas/CreatedRecipeSummary"
     CreatedRecipe:
       type: object
       required:
@@ -2779,6 +3383,57 @@ components:
         workStatus: PRIVATE
         recipeContent:
           name: Synthetic recipe
+    PublicCreatedRecipeContent:
+      type: object
+      required:
+      - name
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+        image:
+          type:
+          - string
+          - 'null'
+        prepTime:
+          type: string
+        totalTime:
+          type: string
+        recipeIngredient:
+          type: array
+          items:
+            type: string
+        recipeInstructions:
+          type: array
+          items:
+            type: string
+        recipeYield:
+          "$ref": "#/components/schemas/RecipeYield"
+        tool:
+          type: array
+          items:
+            type: string
+    PublicCreatedRecipe:
+      type: object
+      required:
+      - recipeId
+      - recipeContent
+      additionalProperties: true
+      properties:
+        recipeId:
+          "$ref": "#/components/schemas/CustomerRecipeId"
+        authorId:
+          type: string
+        status:
+          type: string
+        workStatus:
+          type: string
+        createdAt:
+          type: string
+        modifiedAt:
+          type: string
+        recipeContent:
+          "$ref": "#/components/schemas/PublicCreatedRecipeContent"
     RecipeContent:
       type: object
       required:
@@ -2931,6 +3586,162 @@ components:
         srcListId: synthetic-source-list
         targetListType: CUSTOM
         srcListType: CUSTOM
+    OrganizerRecipe:
+      type: object
+      required:
+      - id
+      - title
+      - type
+      - totalTime
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum:
+          - VORWERK
+          - CUSTOM
+        totalTime:
+          oneOf:
+          - type: integer
+          - type: string
+    OrganizerChapter:
+      type: object
+      required:
+      - title
+      - recipes
+      additionalProperties: true
+      properties:
+        title:
+          type: string
+        recipes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OrganizerRecipe"
+    CustomList:
+      type: object
+      required:
+      - id
+      - title
+      - chapters
+      - listType
+      - author
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        chapters:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OrganizerChapter"
+        listType:
+          type: string
+          const: CUSTOMLIST
+        author:
+          type: string
+    ManagedList:
+      type: object
+      required:
+      - id
+      - title
+      - chapters
+      - listType
+      - author
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        chapters:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OrganizerChapter"
+        listType:
+          type: string
+          const: MANAGEDLIST
+        author:
+          type: string
+    OrganizerPageInfo:
+      type: object
+      required:
+      - totalPages
+      - totalElements
+      additionalProperties: true
+      properties:
+        page:
+          type: integer
+        totalPages:
+          type: integer
+          minimum: 0
+        totalElements:
+          type: integer
+          minimum: 0
+    CustomListPage:
+      type: object
+      required:
+      - customlists
+      - page
+      additionalProperties: true
+      properties:
+        customlists:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CustomList"
+        page:
+          "$ref": "#/components/schemas/OrganizerPageInfo"
+        links:
+          type: object
+          additionalProperties: true
+    ManagedListPage:
+      type: object
+      required:
+      - managedlists
+      - page
+      additionalProperties: true
+      properties:
+        managedlists:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ManagedList"
+        page:
+          "$ref": "#/components/schemas/OrganizerPageInfo"
+        links:
+          type: object
+          additionalProperties: true
+    CustomListMutationResult:
+      type: object
+      required:
+      - content
+      additionalProperties: true
+      properties:
+        message:
+          type: string
+        content:
+          "$ref": "#/components/schemas/CustomList"
+    ManagedListMutationResult:
+      type: object
+      required:
+      - content
+      additionalProperties: true
+      properties:
+        message:
+          type: string
+        content:
+          "$ref": "#/components/schemas/ManagedList"
     AddRecipesToDay:
       type: object
       required:
@@ -2955,6 +3766,98 @@ components:
         recipeIds:
         - r123456
         dayKey: '2026-01-15'
+    ImageAsset:
+      type: object
+      additionalProperties: true
+      properties:
+        square:
+          type:
+          - string
+          - 'null'
+        portrait:
+          type:
+          - string
+          - 'null'
+        landscape:
+          type:
+          - string
+          - 'null'
+    PlanningRecipeAssets:
+      type: object
+      additionalProperties: true
+      properties:
+        images:
+          oneOf:
+          - "$ref": "#/components/schemas/ImageAsset"
+          - type: 'null'
+    PlanningRecipe:
+      type: object
+      required:
+      - id
+      - title
+      - totalTime
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        totalTime:
+          oneOf:
+          - type: integer
+          - type: string
+        assets:
+          oneOf:
+          - "$ref": "#/components/schemas/PlanningRecipeAssets"
+          - type: 'null'
+    PlanningDay:
+      type: object
+      required:
+      - id
+      - title
+      - dayKey
+      - recipes
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        dayKey:
+          type: string
+          format: date
+        recipes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PlanningRecipe"
+        customerRecipes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PlanningRecipe"
+        customerRecipeIds:
+          type: array
+          items:
+            type: string
+    PlanningWeek:
+      type: object
+      required:
+      - myDays
+      additionalProperties: true
+      properties:
+        myDays:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PlanningDay"
+    PlanningMutationResult:
+      type: object
+      required:
+      - content
+      additionalProperties: true
+      properties:
+        message:
+          type: string
+        content:
+          "$ref": "#/components/schemas/PlanningDay"
     OwnedItemPatch:
       type: object
       required:
@@ -2967,11 +3870,225 @@ components:
           type: boolean
         ownedTimestamp:
           type: integer
-          description: Unix timestamp in seconds.
+          description: Timestamp unit is not verified.
       additionalProperties: false
       example:
         id: synthetic-item-id
         isOwned: true
+    ShoppingQuantity:
+      type:
+      - object
+      - 'null'
+      additionalProperties: true
+      properties:
+        value:
+          type:
+          - number
+          - 'null'
+        from:
+          type:
+          - number
+          - 'null'
+        to:
+          type:
+          - number
+          - 'null'
+    ShoppingIngredient:
+      type: object
+      required:
+      - id
+      - ingredientNotation
+      - isOwned
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        ingredientNotation:
+          type: string
+        isOwned:
+          type: boolean
+        quantity:
+          "$ref": "#/components/schemas/ShoppingQuantity"
+        unitNotation:
+          type:
+          - string
+          - 'null'
+    ShoppingRecipe:
+      type: object
+      required:
+      - id
+      - title
+      - recipeIngredientGroups
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        recipeIngredientGroups:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ShoppingIngredient"
+        descriptiveAssets:
+          oneOf:
+          - type: array
+            items:
+              "$ref": "#/components/schemas/ImageAsset"
+          - type: 'null'
+    AdditionalShoppingItem:
+      type: object
+      required:
+      - id
+      - name
+      - isOwned
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        isOwned:
+          type: boolean
+        ownedTimestamp:
+          type: integer
+          description: Timestamp unit is not verified.
+    ShoppingList:
+      type: object
+      required:
+      - recipes
+      - customerRecipes
+      - additionalItems
+      additionalProperties: true
+      properties:
+        recipes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ShoppingRecipe"
+        customerRecipes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ShoppingRecipe"
+        additionalItems:
+          type: array
+          items:
+            "$ref": "#/components/schemas/AdditionalShoppingItem"
+    ShoppingRecipeMutationResult:
+      type: object
+      required:
+      - data
+      additionalProperties: true
+      properties:
+        data:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ShoppingRecipe"
+    ShoppingIngredientMutationResult:
+      type: object
+      required:
+      - data
+      additionalProperties: true
+      properties:
+        data:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ShoppingIngredient"
+    AdditionalShoppingItemsMutationResult:
+      type: object
+      required:
+      - data
+      additionalProperties: true
+      properties:
+        data:
+          type: array
+          items:
+            "$ref": "#/components/schemas/AdditionalShoppingItem"
+    RecipeNote:
+      type: object
+      required:
+      - text
+      additionalProperties: true
+      properties:
+        text:
+          type: string
+    CommunityUserInfo:
+      type: object
+      required:
+      - username
+      additionalProperties: true
+      properties:
+        username:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        picture:
+          type:
+          - string
+          - 'null'
+        pictureTemplate:
+          type: string
+    CommunityProfile:
+      type: object
+      required:
+      - id
+      - userInfo
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        userInfo:
+          "$ref": "#/components/schemas/CommunityUserInfo"
+    CommunityProfileUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        food-preferences:
+          type: array
+          items:
+            type: string
+        accessories:
+          type: array
+          items:
+            type: string
+      anyOf:
+      - required:
+        - food-preferences
+      - required:
+        - accessories
+    Subscription:
+      type: object
+      required:
+      - active
+      - expires
+      - startDate
+      - status
+      - subscriptionLevel
+      - subscriptionSource
+      - type
+      - extendedType
+      additionalProperties: true
+      properties:
+        active:
+          type: boolean
+        expires:
+          type: string
+        startDate:
+          type: string
+        status:
+          type: string
+        subscriptionLevel:
+          type: string
+        subscriptionSource:
+          type: string
+        type:
+          type: string
+        extendedType:
+          type: string
+    SubscriptionList:
+      type: array
+      items:
+        "$ref": "#/components/schemas/Subscription"
     Problem:
       type: object
       additionalProperties: true
@@ -3035,7 +4152,7 @@ components:
         _links: {}
 x-cookidoo-research:
   market: pl
-  observedAt: '2026-08-16'
+  observedAt: '2026-08-17'
   provenance: provenance/sources.yaml
   scope: Full mapped surface; advertised-only operations remain explicitly unverified.
   omittedEndpoint: "/search/api/subscription/token"
