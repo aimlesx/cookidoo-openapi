@@ -48,7 +48,7 @@ object.
 
 ## Validate locally
 
-Requires Node.js 22.12 or newer:
+Requires Node.js 24 or newer:
 
 ```sh
 npm ci
