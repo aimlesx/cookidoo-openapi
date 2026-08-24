@@ -164,6 +164,66 @@ test("newly verified response contracts remain wired", () => {
   }
 });
 
+test("created-recipe TTS writes are typed while read annotations remain open", () => {
+  const patch = spec.paths["/created-recipes/{lang}/{customerRecipeId}"].patch;
+  assert.equal(patch["x-cookidoo"].lastVerified, "2026-08-17");
+  assert.ok(patch["x-cookidoo"].evidence.some(({ source, supports }) =>
+    source === "external-clients-2026-08-17" && supports.includes("request")
+  ));
+
+  const instruction = spec.components.schemas.Instruction;
+  assert.deepEqual(instruction.properties.annotations.items, {
+    type: "object",
+    additionalProperties: true
+  });
+  assert.equal(
+    spec.components.schemas.RecipeContent.properties.instructions.items.$ref,
+    "#/components/schemas/Instruction"
+  );
+
+  const writable = spec.components.schemas.WritableInstruction;
+  assert.equal(writable.properties.annotations.items.$ref, "#/components/schemas/InstructionAnnotation");
+  assert.equal(
+    spec.components.schemas.CreatedRecipePatch.properties.instructions.items.$ref,
+    "#/components/schemas/WritableInstruction"
+  );
+
+  const annotation = spec.components.schemas.InstructionAnnotation;
+  assert.deepEqual(annotation.oneOf.map(({ $ref }) => $ref), [
+    "#/components/schemas/TtsInstructionAnnotation",
+    "#/components/schemas/NonTtsInstructionAnnotation"
+  ]);
+
+  const tts = spec.components.schemas.TtsInstructionAnnotation;
+  assert.deepEqual(tts.required, ["type", "data", "position"]);
+  assert.equal(tts.additionalProperties, true);
+  assert.equal(tts.properties.type.const, "TTS");
+
+  const data = spec.components.schemas.TtsAnnotationData;
+  assert.equal(data.properties.time.type, "number");
+  assert.equal(data.properties.time.minimum, undefined);
+  assert.equal(data.properties.speed.type, "string");
+  assert.equal(data.properties.temperature.$ref, "#/components/schemas/CookingTemperature");
+  assert.deepEqual(data.properties.direction.enum, ["CW", "CCW"]);
+
+  const position = spec.components.schemas.InstructionTextPosition;
+  assert.equal(position.properties.offset.type, "number");
+  assert.equal(position.properties.length.type, "number");
+  assert.equal(position.properties.offset.minimum, undefined);
+  assert.equal(position.properties.length.minimum, undefined);
+
+  const fallback = spec.components.schemas.NonTtsInstructionAnnotation;
+  assert.equal(fallback.required, undefined);
+  assert.deepEqual(fallback.not, {
+    required: ["type"],
+    properties: { type: { const: "TTS" } }
+  });
+
+  const example = writable.example;
+  const { offset, length } = example.annotations[0].position;
+  assert.equal(example.text.slice(offset, offset + length), "2 s / obr. 6");
+});
+
 test("unknown response shapes use only the unconstrained JSON schema", () => {
   for (const { operation } of operations) {
     const metadata = operation["x-cookidoo"];

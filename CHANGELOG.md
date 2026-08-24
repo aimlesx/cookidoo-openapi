@@ -8,6 +8,13 @@ and project versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- A request-only contract for created-recipe `TTS` annotations, covering time,
+  temperature, speed, direction, and their text span without narrowing response
+  compatibility for unknown annotations.
+- Guidance for preloaded Thermomix settings and the on-device execution boundary.
+
 ## [0.2.0] - 2026-08-17
 
 ### Added
