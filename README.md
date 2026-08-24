@@ -24,6 +24,7 @@ included.
 - [`docs/provenance.md`](docs/provenance.md) — evidence and sanitization policy
 - [`docs/authentication.md`](docs/authentication.md) — login, cookie-jar, and CSRF findings
 - [`docs/search.md`](docs/search.md) — search, cluster, filter, and pagination findings
+- [`docs/created-recipes.md`](docs/created-recipes.md) — created-recipe TTS settings and execution boundary
 - [`docs/protocol-behavior.md`](docs/protocol-behavior.md) — retry, rate-limit, idempotency, and concurrency guidance
 - [`docs/responsible-use.md`](docs/responsible-use.md) — project safety boundaries
 - [`docs/legal-context.md`](docs/legal-context.md) — sources reviewed and limitations

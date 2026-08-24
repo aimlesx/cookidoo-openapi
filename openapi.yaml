@@ -674,10 +674,17 @@ paths:
       - cookieSession: []
       x-cookidoo:
         status: observed
-        lastVerified: '2026-08-16'
+        lastVerified: '2026-08-17'
         market: pl
         evidence:
         - source: authenticated-ui-2026-08-16
+          supports:
+          - path
+          - method
+          - authentication
+          - request
+          - response
+        - source: external-clients-2026-08-17
           supports:
           - path
           - method
@@ -3497,7 +3504,7 @@ components:
         instructions:
           type: array
           items:
-            "$ref": "#/components/schemas/Instruction"
+            "$ref": "#/components/schemas/WritableInstruction"
         tools:
           type: array
           items:
@@ -3540,6 +3547,82 @@ components:
           const: INGREDIENT
         text:
           type: string
+    InstructionTextPosition:
+      type: object
+      required:
+      - offset
+      - length
+      additionalProperties: true
+      properties:
+        offset:
+          type: number
+          description: Start of the annotated span in the instruction text.
+        length:
+          type: number
+          description: Length of the annotated instruction-text span.
+    CookingTemperature:
+      type: object
+      required:
+      - value
+      - unit
+      additionalProperties: true
+      properties:
+        value:
+          type: string
+        unit:
+          type: string
+          enum:
+          - C
+          - F
+    TtsAnnotationData:
+      type: object
+      description: |-
+        Time, temperature, and speed values preloaded by a created-recipe step.
+        Time is expressed in seconds. Clockwise rotation is normally represented
+        by omitting `direction`.
+      additionalProperties: true
+      properties:
+        time:
+          type: number
+          description: Duration in seconds.
+        speed:
+          type: string
+        temperature:
+          "$ref": "#/components/schemas/CookingTemperature"
+        direction:
+          type: string
+          enum:
+          - CW
+          - CCW
+    TtsInstructionAnnotation:
+      type: object
+      required:
+      - type
+      - data
+      - position
+      additionalProperties: true
+      properties:
+        type:
+          type: string
+          const: TTS
+        data:
+          "$ref": "#/components/schemas/TtsAnnotationData"
+        position:
+          "$ref": "#/components/schemas/InstructionTextPosition"
+    NonTtsInstructionAnnotation:
+      type: object
+      description: Forward-compatible opaque annotation other than an object with `type` equal to `TTS`.
+      additionalProperties: true
+      not:
+        required:
+        - type
+        properties:
+          type:
+            const: TTS
+    InstructionAnnotation:
+      oneOf:
+      - "$ref": "#/components/schemas/TtsInstructionAnnotation"
+      - "$ref": "#/components/schemas/NonTtsInstructionAnnotation"
     Instruction:
       type: object
       required:
@@ -3560,6 +3643,37 @@ components:
         missedUsages:
           type: array
           items: {}
+    WritableInstruction:
+      type: object
+      required:
+      - type
+      - text
+      additionalProperties: true
+      properties:
+        type:
+          type: string
+          const: STEP
+        text:
+          type: string
+        annotations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/InstructionAnnotation"
+        missedUsages:
+          type: array
+          items: {}
+      example:
+        type: STEP
+        text: Miksuj 2 s / obr. 6.
+        annotations:
+        - type: TTS
+          data:
+            time: 2
+            speed: '6'
+          position:
+            offset: 7
+            length: 12
+        missedUsages: []
     MoveRecipe:
       type: object
       required:
